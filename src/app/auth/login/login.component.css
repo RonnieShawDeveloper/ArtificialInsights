@@ -1,0 +1,30 @@
+/* src/app/auth/login/login.component.css */
+
+/*
+ * This file contains component-specific styles for the LoginComponent.
+ * Most of the layout and general styling is handled by Bootstrap classes
+ * directly in login.component.html, and Angular Material provides
+ * its own theming.
+ *
+ * Use this CSS file for:
+ * - Overriding Angular Material component default styles if necessary.
+ * - Adding specific animations or transitions.
+ * - Fine-tuning visual details not easily achievable with Bootstrap utilities.
+ *
+ * Keep it minimal to leverage Bootstrap and Angular Material effectively.
+ */
+
+/* Example: Customizing Angular Material input focus color if needed */
+/*
+.mat-mdc-form-field.mat-focused .mat-mdc-form-field-ripple {
+  color: var(--mdc-theme-primary);
+}
+*/
+
+/* Example: Adjusting card shadow or background if not using Bootstrap for it */
+/*
+.card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+}
+*/

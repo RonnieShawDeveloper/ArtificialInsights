@@ -1,1 +1,29 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* Import Bootstrap CSS */
+@import "bootstrap/dist/css/bootstrap.min.css";
+
+/* Import Angular Material Theme */
+/* This line is crucial for resolving --mdc-theme-* CSS variables */
+@import '@angular/material/prebuilt-themes/rose-red.css'; /* Ensure this path is correct for your chosen theme */
+
+/* You mentioned a red/rose theme. 'rose-red.css' is a pre-built theme.
+   If you have a custom theme, ensure its CSS is imported here. */
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+/* Global styles for consistency */
+:root {
+  /* Define custom CSS variables if needed, or override Material defaults */
+  --text-primary: #333;
+  --text-secondary: #666;
+}
+
+/* Ensure Angular Material components inherit font family */
+.mat-mdc-card,
+.mat-mdc-form-field,
+.mat-mdc-button,
+.mat-mdc-tab-group {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
