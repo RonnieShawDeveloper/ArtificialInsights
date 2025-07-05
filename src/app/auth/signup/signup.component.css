@@ -1,0 +1,30 @@
+/* src/app/auth/signup/signup.component.css */
+
+/*
+ * This file contains component-specific styles for the SignupComponent.
+ * Similar to login.component.css, the primary styling for this component
+ * is handled by Tailwind CSS classes directly in signup.component.html.
+ *
+ * Use this CSS file for:
+ * - Overriding Angular Material component default styles if necessary.
+ * - Adding specific animations or transitions.
+ * - Fine-tuning visual details not easily achievable with utility classes.
+ *
+ * Keep it minimal to leverage Tailwind's utility-first approach effectively.
+ */
+
+/* Example: Customizing button hover effects if not using Tailwind for it */
+/*
+button[mat-raised-button]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease-in-out;
+}
+*/
+
+/* Example: Adjusting mat-card padding or border if needed */
+/*
+mat-card {
+  border: 1px solid #e0e0e0;
+}
+*/

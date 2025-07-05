@@ -1,0 +1,197 @@
+<!-- src/app/onboarding/onboarding.component.html -->
+
+<div class="d-flex flex-column vh-100 bg-light">
+  <!-- Top Toolbar -->
+  <mat-toolbar color="primary" class="shadow-sm">
+    <span class="h4 fw-bold mb-0">Artificial Insights - Onboarding</span>
+    <span class="flex-grow-1"></span>
+    <span *ngIf="selectedPackageId" class="me-3 text-white-50 small">Package: {{ selectedPackageId }}</span>
+    <button mat-icon-button (click)="router.navigate(['/dashboard'])">
+      <mat-icon>dashboard</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <!-- Main Content Area -->
+  <div class="d-flex flex-column flex-grow-1 p-4 justify-content-center align-items-center">
+    <div class="card shadow-lg rounded-3" style="max-width: 800px; width: 100%; min-height: 500px;">
+      <div class="card-body p-4 d-flex flex-column">
+        <!-- Loading progress bar -->
+        <mat-progress-bar *ngIf="isLoading" mode="indeterminate" class="mb-4"></mat-progress-bar>
+
+        <!-- Error message display -->
+        <div *ngIf="errorMessage" class="alert alert-danger text-center mb-4" role="alert">
+          <strong>Error!</strong> {{ errorMessage }}
+        </div>
+
+        <!-- Onboarding Phases -->
+        <div class="flex-grow-1 d-flex flex-column">
+          <!-- Initial Greeting Phase -->
+          <ng-container *ngIf="currentPhase === OnboardingPhase.INITIAL_GREETING">
+            <div class="text-center my-auto">
+              <h2 class="h3 fw-bold text-primary mb-3">Welcome to your AI Onboarding!</h2>
+              <p class="lead text-muted">I'm preparing to guide you through setting up your business for compliance.</p>
+              <mat-spinner *ngIf="isLoading" diameter="40"></mat-spinner>
+            </div>
+          </ng-container>
+
+          <!-- User Details Phase -->
+          <ng-container *ngIf="currentPhase === OnboardingPhase.USER_DETAILS">
+            <div class="text-center mb-4">
+              <h3 class="h4 fw-bold text-dark">Let's get to know you!</h3>
+              <p class="text-muted">Please provide your first and last name.</p>
+            </div>
+            <form (ngSubmit)="saveUserDetailsAndProceed()" class="flex-grow-1 d-flex flex-column justify-content-center">
+              <mat-form-field appearance="outline" class="w-100 mb-3">
+                <mat-label>First Name</mat-label>
+                <input matInput [formControl]="firstNameControl" required>
+                <mat-error *ngIf="firstNameControl.invalid && firstNameControl.touched">First Name is required</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="w-100 mb-4">
+                <mat-label>Last Name</mat-label>
+                <input matInput [formControl]="lastNameControl" required>
+                <mat-error *ngIf="lastNameControl.invalid && lastNameControl.touched">Last Name is required</mat-error>
+              </mat-form-field>
+              <button mat-raised-button color="primary" class="w-100 py-2 fs-5" [disabled]="isLoading || firstNameControl.invalid || lastNameControl.invalid">
+                Next
+              </button>
+            </form>
+          </ng-container>
+
+          <!-- Business Basic Info Phase -->
+          <ng-container *ngIf="currentPhase === OnboardingPhase.BUSINESS_BASIC_INFO">
+            <div class="text-center mb-4">
+              <h3 class="h4 fw-bold text-dark">Tell me about your business!</h3>
+              <p class="text-muted">Provide basic information for your primary business location.</p>
+            </div>
+            <form (ngSubmit)="saveBusinessBasicInfoAndProceed()" class="flex-grow-1 d-flex flex-column overflow-auto">
+              <mat-form-field appearance="outline" class="w-100 mb-3">
+                <mat-label>Business Name</mat-label>
+                <input matInput [formControl]="businessNameControl" required>
+                <mat-error *ngIf="businessNameControl.invalid && businessNameControl.touched">Business Name is required</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="w-100 mb-3">
+                <mat-label>Street Address</mat-label>
+                <input matInput [formControl]="businessStreetControl" required>
+                <mat-error *ngIf="businessStreetControl.invalid && businessStreetControl.touched">Street Address is required</mat-error>
+              </mat-form-field>
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label>City</mat-label>
+                    <input matInput [formControl]="businessCityControl" required>
+                    <mat-error *ngIf="businessCityControl.invalid && businessCityControl.touched">City is required</mat-error>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label>State</mat-label>
+                    <input matInput [formControl]="businessStateControl" required>
+                    <mat-error *ngIf="businessStateControl.invalid && businessStateControl.touched">State is required</mat-error>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label>Zip Code</mat-label>
+                    <input matInput [formControl]="businessZipControl" required>
+                    <mat-error *ngIf="businessZipControl.invalid && businessZipControl.touched">Zip Code is required</mat-error>
+                  </mat-form-field>
+                </div>
+                <div class="col-md-6">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label>Country</mat-label>
+                    <input matInput [formControl]="businessCountryControl" required>
+                    <mat-error *ngIf="businessCountryControl.invalid && businessCountryControl.touched">Country is required</mat-error>
+                  </mat-form-field>
+                </div>
+              </div>
+              <mat-form-field appearance="outline" class="w-100 mb-3">
+                <mat-label>Phone Number</mat-label>
+                <input matInput [formControl]="businessPhoneControl" required>
+                <mat-error *ngIf="businessPhoneControl.invalid && businessPhoneControl.touched">Phone Number is required</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="w-100 mb-3">
+                <mat-label>Legal Entity Type (e.g., LLC, Sole Prop.)</mat-label>
+                <input matInput [formControl]="businessLegalEntityControl" required>
+                <mat-error *ngIf="businessLegalEntityControl.invalid && businessLegalEntityControl.touched">Legal Entity Type is required</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="w-100 mb-4">
+                <mat-label>General Business Type (e.g., Restaurant, Retail)</mat-label>
+                <input matInput [formControl]="businessTypeControl" required>
+                <mat-error *ngIf="businessTypeControl.invalid && businessTypeControl.touched">Business Type is required</mat-error>
+              </mat-form-field>
+              <button mat-raised-button color="primary" class="w-100 py-2 fs-5" [disabled]="isLoading || businessNameControl.invalid || businessStreetControl.invalid || businessCityControl.invalid || businessStateControl.invalid || businessZipControl.invalid || businessCountryControl.invalid || businessPhoneControl.invalid || businessLegalEntityControl.invalid || businessTypeControl.invalid">
+                Next
+              </button>
+            </form>
+          </ng-container>
+
+          <!-- Business Description Phase -->
+          <ng-container *ngIf="currentPhase === OnboardingPhase.BUSINESS_DESCRIPTION">
+            <div class="text-center mb-4">
+              <h3 class="h4 fw-bold text-dark">Describe your business in detail!</h3>
+              <p class="text-muted">The more information, the better I can assist you.</p>
+            </div>
+            <form (ngSubmit)="saveBusinessDescriptionAndProceed()" class="flex-grow-1 d-flex flex-column justify-content-center">
+              <mat-form-field appearance="outline" class="w-100 mb-4 flex-grow-1">
+                <mat-label>Detailed Business Description</mat-label>
+                <textarea matInput [formControl]="businessDescriptionControl" rows="8" required placeholder="Tell me about your products/services, operations, unique aspects, etc."></textarea>
+                <mat-error *ngIf="businessDescriptionControl.invalid && businessDescriptionControl.touched">Business Description is required</mat-error>
+              </mat-form-field>
+              <button mat-raised-button color="primary" class="w-100 py-2 fs-5" [disabled]="isLoading || businessDescriptionControl.invalid">
+                Next
+              </button>
+            </form>
+          </ng-container>
+
+          <!-- AI Interview Phase -->
+          <ng-container *ngIf="currentPhase === OnboardingPhase.AI_INTERVIEW">
+            <div class="card-header bg-primary text-white text-center py-3 rounded-top">
+              <h3 class="h5 mb-0">AI Business Compliance Assistant</h3>
+            </div>
+            <div #chatWindow class="card-body flex-grow-1 overflow-auto bg-light-subtle chat-window">
+              <div *ngFor="let message of chatMessages" class="mb-3">
+                <div *ngIf="message.sender === 'ai'" class="d-flex justify-content-start">
+                  <div class="ai-message p-3 rounded-3 shadow-sm">
+                    <mat-icon class="me-2 text-primary">psychology</mat-icon>
+                    <span *ngIf="!message.isTyping">{{ message.text }}</span>
+                    <mat-progress-spinner *ngIf="message.isTyping" mode="indeterminate" diameter="20"></mat-progress-spinner>
+                  </div>
+                </div>
+                <div *ngIf="message.sender === 'user'" class="d-flex justify-content-end">
+                  <div class="user-message p-3 rounded-3 shadow-sm">
+                    {{ message.text }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer bg-white border-top p-3">
+              <form (ngSubmit)="sendUserResponse()" class="d-flex">
+                <mat-form-field appearance="outline" class="flex-grow-1 me-3 mb-0">
+                  <mat-label>Your Response</mat-label>
+                  <!-- Changed to textarea for multi-line input -->
+                  <textarea matInput #chatInput [formControl]="userResponseControl" placeholder="Type your answer here..." rows="3"></textarea>
+                </mat-form-field>
+                <button mat-raised-button color="primary" type="submit" [disabled]="userResponseControl.invalid">
+                  <mat-icon>send</mat-icon> Send
+                </button>
+              </form>
+            </div>
+          </ng-container>
+
+          <!-- Completion Phase -->
+          <ng-container *ngIf="currentPhase === OnboardingPhase.COMPLETION">
+            <div class="text-center my-auto">
+              <mat-icon class="display-1 text-success mb-3">check_circle</mat-icon>
+              <h2 class="h3 fw-bold text-dark mb-3">Onboarding Complete!</h2>
+              <p class="lead text-muted">Your compliance dashboard is being set up dynamically.</p>
+              <p class="text-muted">You will be redirected to your dashboard shortly...</p>
+              <mat-progress-bar mode="indeterminate" class="w-50 mx-auto mt-4"></mat-progress-bar>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

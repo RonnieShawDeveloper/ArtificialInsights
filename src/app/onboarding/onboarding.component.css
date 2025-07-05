@@ -1,0 +1,74 @@
+/* src/app/onboarding/onboarding.component.css */
+
+/*
+ * This file contains component-specific styles for the OnboardingComponent.
+ * Layout and general styling are primarily handled by Bootstrap classes
+ * directly in onboarding.component.html, and Angular Material provides
+ * its own theming for components.
+ *
+ * Use this CSS file for:
+ * - Specific styling of chat bubbles.
+ * - Overriding Angular Material component default styles if necessary.
+ * - Fine-tuning visual details not easily achievable with Bootstrap utilities.
+ */
+
+/* Styles for the chat window */
+.chat-window {
+  min-height: 250px; /* Ensure chat window has a minimum height */
+  max-height: 400px; /* Max height for scrollable chat */
+  overflow-y: auto; /* Enable vertical scrolling */
+  padding: 1rem; /* Add padding inside the chat window */
+  background-color: var(--bs-light-bg-subtle); /* Use Bootstrap's light subtle background */
+  border-radius: 0 0 0.3rem 0.3rem; /* Rounded bottom corners if card-header is rounded-top */
+}
+
+/* AI message bubble styling */
+.ai-message {
+  background-color: var(--mat-sys-surface-container-low); /* Corrected variable name */
+  color: var(--mat-sys-on-surface); /* Corrected variable name */
+  border: 1px solid var(--mat-sys-outline-variant); /* Corrected variable name */
+  max-width: 80%; /* Limit message width */
+  word-wrap: break-word; /* Ensure long words wrap */
+  display: flex; /* For icon alignment */
+  align-items: center; /* Align icon and text vertically */
+}
+
+/* User message bubble styling */
+.user-message {
+  background-color: var(--mat-sys-primary); /* Corrected variable name */
+  color: var(--mat-sys-on-primary); /* Corrected variable name */
+  max-width: 80%; /* Limit message width */
+  word-wrap: break-word; /* Ensure long words wrap */
+}
+
+/* Adjustments for Material spinner within chat */
+mat-progress-spinner {
+  display: inline-block; /* Keep spinner inline with text */
+  margin-left: 0.5rem; /* Space between icon and spinner */
+}
+
+/* Ensure form fields take full width and have consistent spacing */
+mat-form-field {
+  width: 100%;
+}
+
+/* General adjustments for card content within phases */
+.card-body.d-flex.flex-column {
+  /* This ensures content inside the card body stretches and aligns correctly */
+  justify-content: center; /* Vertically center content if it doesn't fill space */
+  align-items: center; /* Horizontally center content */
+}
+
+/* Override default Material input padding for better alignment with Bootstrap */
+.mat-mdc-form-field-infix {
+  padding-top: 0.8em !important;
+  padding-bottom: 0.8em !important;
+}
+
+/* Adjustments for the specific forms within onboarding phases */
+form.flex-grow-1.d-flex.flex-column.justify-content-center,
+form.flex-grow-1.d-flex.flex-column.overflow-auto {
+  width: 100%; /* Ensure forms take full width of their container */
+  max-width: 600px; /* Optional: Limit form width for better readability on large screens */
+  margin: 0 auto; /* Center the form horizontally within its container */
+}

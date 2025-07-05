@@ -1,0 +1,62 @@
+/* src/app/dashboard/dashboard.component.css */
+
+/*
+ * This file contains component-specific styles for the DashboardComponent.
+ * Most of the layout and general styling is handled by Bootstrap classes
+ * directly in dashboard.component.html, and Angular Material provides
+ * its own theming.
+ *
+ * Use this CSS file for:
+ * - Overriding Angular Material component default styles if necessary.
+ * - Adding specific animations or transitions.
+ * - Fine-tuning visual details not easily achievable with Bootstrap utilities.
+ * - Custom styles for the selected business item in the sidenav.
+ */
+
+/* Style for the selected business item in the mat-nav-list */
+.selected-item {
+  background-color: var(--mdc-theme-primary-container) !important; /* Uses Material's primary container color */
+  color: var(--mdc-theme-on-primary-container) !important; /* Text color for the primary container */
+  font-weight: 600; /* Make text bolder */
+  border-left: 4px solid var(--mdc-theme-primary); /* Highlight with primary color border */
+  padding-left: calc(1rem - 4px); /* Adjust padding to account for border (Bootstrap's p-4 is 1rem) */
+}
+
+/* Ensure the mat-icon within a selected item also gets the correct color */
+.selected-item mat-icon {
+  color: var(--mdc-theme-on-primary-container) !important;
+}
+
+/* Style for smaller Material icons, specifically used in feature lists */
+.small-icon {
+  font-size: 1.1rem !important; /* Adjust icon size */
+  height: 1.1rem !important;
+  width: 1.1rem !important;
+  vertical-align: middle; /* Align icon vertically with text */
+}
+
+/* Adjustments for MatCard within tabs for better spacing and appearance */
+/* The shadow-sm class from Bootstrap is applied directly in HTML for inner cards. */
+/* If you need more specific card styling beyond Bootstrap's utility classes, add it here. */
+/*
+mat-card.shadow-lg {
+  border: 1px solid rgba(0,0,0,.125);
+}
+*/
+
+/* Customizing MatTabGroup header if needed, for example, to match theme colors more closely */
+/* You might need to inspect the generated CSS to get the exact selectors */
+/*
+.mat-mdc-tab-group.mat-primary .mat-mdc-tab-header {
+  background-color: var(--mdc-theme-surface);
+  border-bottom: 1px solid var(--mdc-theme-outline);
+}
+
+.mat-mdc-tab .mat-mdc-tab-label-container {
+  color: var(--mdc-theme-on-surface-variant);
+}
+
+.mat-mdc-tab .mat-mdc-tab-label-active {
+  color: var(--mdc-theme-primary);
+}
+*/
