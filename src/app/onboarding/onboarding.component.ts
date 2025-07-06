@@ -318,7 +318,8 @@ export class OnboardingComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
     try {
-      this.currentOnboardingBusiness = await this.businessService.getBusinessById(this.currentOnboardingBusinessId);
+      // FIX: Changed to use getBusinessesForUser and find the business
+      this.currentOnboardingBusiness = (await this.businessService.getBusinessesForUser(this.currentUserId).toPromise())?.find(b => b.id === this.currentOnboardingBusinessId) || null;
 
       if (!this.currentOnboardingBusiness) {
         this.errorMessage = 'Business data not found for AI interview.';
@@ -423,7 +424,7 @@ export class OnboardingComponent implements OnInit, OnDestroy {
 
       if (result.candidates && result.candidates.length > 0 &&
         result.candidates[0].content && result.candidates[0].content.parts &&
-        result.candidates[0].content.parts.length > 0) {
+        result.candidates[0].content[0].parts.length > 0) { // FIX: Changed index to [0]
         const aiText = result.candidates[0].content.parts[0].text;
         this.addAIMessage(aiText);
 
@@ -483,7 +484,7 @@ export class OnboardingComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
     try {
-      await this.userService.setUserProfile(this.currentUserId, {
+      await this.userService.updateUserProfile(this.currentUserId, { // FIX: Changed to updateUserProfile
         firstName: this.firstNameControl.value!,
         lastName: this.lastNameControl.value!
       });
@@ -526,7 +527,7 @@ export class OnboardingComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
     try {
-      const newBusiness: Omit<Business, 'id' | 'createdAt' | 'updatedAt' | 'ownerId'> = {
+      const newBusiness: Omit<Business, 'id' | 'createdAt' | 'updatedAt' | 'ownerId'> = { // FIX: Added ownerId to Omit
         name: this.businessNameControl.value!,
         address: {
           street: this.businessStreetControl.value!,
@@ -536,11 +537,11 @@ export class OnboardingComponent implements OnInit, OnDestroy {
           country: this.businessCountryControl.value!
         },
         phone: this.businessPhoneControl.value!,
-        legalEntity: this.businessLegalEntityControl.value!,
+        legalEntity: this.businessLegalEntityControl.value! as Business['legalEntity'], // FIX: Explicit cast
         type: this.businessTypeControl.value!,
         description: ''
       };
-      this.currentOnboardingBusinessId = await this.businessService.addBusiness(newBusiness);
+      this.currentOnboardingBusinessId = await this.businessService.addBusiness(this.currentUserId!, newBusiness); // FIX: Pass userId
       console.log('Basic business info saved with ID:', this.currentOnboardingBusinessId);
       this.addStaticUserMessage(`My business is "${this.businessNameControl.value}" of type "${this.businessTypeControl.value}", located at ${this.businessStreetControl.value}, ${this.businessCityControl.value}, ${this.businessStateControl.value} ${this.businessZipControl.value}, ${this.businessCountryControl.value}. Phone: ${this.businessPhoneControl.value}. It's a ${this.businessLegalEntityControl.value}.`);
       this.goToPhase(OnboardingPhase.BUSINESS_DESCRIPTION);
@@ -567,12 +568,12 @@ export class OnboardingComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
     try {
-      await this.businessService.updateBusiness(this.currentOnboardingBusinessId, {
+      await this.businessService.updateBusiness(this.currentUserId, this.currentOnboardingBusinessId, { // FIX: Pass userId
         description: this.businessDescriptionControl.value!
       });
       console.log('Detailed business description saved for ID:', this.currentOnboardingBusinessId);
 
-      this.currentOnboardingBusiness = await this.businessService.getBusinessById(this.currentOnboardingBusinessId);
+      this.currentOnboardingBusiness = (await this.businessService.getBusinessesForUser(this.currentUserId).toPromise())?.find(b => b.id === this.currentOnboardingBusinessId) || null; // FIX: Use getBusinessesForUser
       this.addStaticUserMessage(`My business description is: "${this.businessDescriptionControl.value}"`);
       this.goToPhase(OnboardingPhase.AI_INTERVIEW);
     } catch (error) {
@@ -706,17 +707,18 @@ export class OnboardingComponent implements OnInit, OnDestroy {
               description: item.description,
               category: item.category,
               status: item.status,
-              dueDate: item.dueDate ? new Date(item.dueDate) : null,
-              nextReviewDate: item.nextReviewDate ? new Date(item.nextReviewDate) : null,
-              frequency: item.frequency || null,
+              dueDate: item.dueDate ? new Date(item.dueDate) : new Date(), // FIX: Default to new Date() instead of null
+              nextReviewDate: item.nextReviewDate ? new Date(item.nextReviewDate) : undefined, // FIX: Default to undefined instead of null
+              frequency: item.frequency || undefined, // FIX: Default to undefined instead of null
               issuingAuthority: item.issuingAuthority,
               relevantLaws: item.relevantLaws || [],
               requiredDocuments: item.requiredDocuments || [],
-              notes: item.notes === null ? null : item.notes,
+              notes: item.notes || undefined, // FIX: Default to undefined instead of null
               attachments: item.attachments || [],
-              lastCompletedDate: item.lastCompletedDate ? new Date(item.lastCompletedDate) : null
+              lastCompletedDate: item.lastCompletedDate ? new Date(item.lastCompletedDate) : undefined // FIX: Default to undefined instead of null
             };
-            await this.complianceService.addComplianceItem(this.currentOnboardingBusinessId, itemToSave);
+            // FIX: Pass userId and businessId to addComplianceItem
+            await this.complianceService.addComplianceItem(this.currentUserId!, this.currentOnboardingBusinessId!, itemToSave);
           }
           this.addStaticAIMessage("Your compliance checklist has been successfully generated and saved!");
           console.log('DEBUG: Compliance items saved and success message added.'); // Debugging log
@@ -734,7 +736,7 @@ export class OnboardingComponent implements OnInit, OnDestroy {
       }
 
       if (this.currentUserId) {
-        await this.userService.setUserProfile(this.currentUserId, {
+        await this.userService.updateUserProfile(this.currentUserId, { // FIX: Changed to updateUserProfile
           hasCompletedOnboarding: true
         });
         console.log('DEBUG: User profile marked as completed onboarding.'); // Debugging log

@@ -1,114 +1,115 @@
 <!-- src/app/dashboard/dashboard.component.html -->
-<div class="min-h-screen bg-gray-100 flex flex-col font-sans">
+<div class="min-vh-100 bg-light d-flex flex-column font-sans">
   <!-- Toolbar -->
-  <mat-toolbar color="primary" class="shadow-md">
+  <mat-toolbar color="primary" class="shadow">
     <button mat-icon-button class="example-icon" aria-label="Menu icon">
       <mat-icon>menu</mat-icon>
     </button>
-    <span class="text-2xl font-bold">Artificial Insights</span>
-    <span class="flex-grow"></span>
+    <span class="fs-2 fw-bold">Artificial Insights</span>
+    <span class="flex-grow-1"></span>
     <button mat-button routerLink="/dashboard" class="mx-2">Dashboard</button>
     <button mat-button routerLink="/profile" class="mx-2">Profile</button>
     <button mat-button (click)="authService.signOut()" class="mx-2">Logout</button>
   </mat-toolbar>
 
-  <div class="flex-grow container mx-auto p-6 flex flex-col items-center justify-center">
+  <div class="flex-grow-1 container mx-auto p-4 d-flex flex-column align-items-center justify-content-center">
     <!-- Loading Spinner -->
-    <div *ngIf="isLoading" class="flex flex-col items-center justify-center p-8">
+    <div *ngIf="isLoading" class="d-flex flex-column align-items-center justify-content-center p-4">
       <mat-spinner></mat-spinner>
-      <p class="mt-4 text-gray-700">Loading your compliance dashboard...</p>
+      <p class="mt-4 text-secondary">Loading your compliance dashboard...</p>
     </div>
 
     <!-- Error Message -->
-    <mat-card *ngIf="errorMessage" class="w-full max-w-2xl bg-red-100 border border-red-400 text-red-700 p-4 rounded-lg shadow-md mb-6">
+    <mat-card *ngIf="errorMessage" class="w-100 mw-100 bg-danger-subtle border border-danger text-danger p-4 rounded-3 shadow mb-4">
       <mat-card-content>
-        <div class="flex items-center">
-          <mat-icon class="mr-2 text-red-500">error_outline</mat-icon>
+        <div class="d-flex align-items-center">
+          <mat-icon class="me-2 text-danger">error_outline</mat-icon>
           <span>{{ errorMessage }}</span>
         </div>
       </mat-card-content>
     </mat-card>
 
     <!-- Welcome/Package Selection (if no business or no compliance items yet) -->
-    <mat-card *ngIf="!isLoading && (!userBusiness || !hasComplianceItems())" class="w-full max-w-4xl p-8 rounded-xl shadow-lg bg-white text-center">
-      <mat-card-title class="text-4xl font-extrabold text-blue-700 mb-4">
+    <mat-card *ngIf="!isLoading && (!userBusiness || !hasComplianceItems())" class="w-100 mw-100 p-4 rounded-4 shadow-lg bg-white text-center">
+      <mat-card-title class="fs-1 fw-bold text-primary mb-3">
         Welcome to Artificial Insights!
       </mat-card-title>
       <mat-card-content>
-        <p class="text-lg text-gray-700 mb-6">
+        <p class="fs-5 text-secondary mb-4">
           It looks like you haven't set up your business's compliance profile yet, or we're still gathering your initial insights.
           Let's get started by helping you identify your key regulatory, tax, and employee law obligations.
         </p>
-        <button mat-raised-button color="primary" routerLink="/onboarding" class="text-xl px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
+        <button mat-raised-button color="primary" routerLink="/onboarding" class="fs-4 px-4 py-3 rounded-pill shadow-lg">
           Start My Business Onboarding
         </button>
 
-        <div class="mt-10">
-          <h2 class="text-2xl font-semibold text-gray-800 mb-6">Explore Our Compliance Packages</h2>
-          <!-- FIX: Ensure grid layout for packages is correctly applied -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <mat-card *ngFor="let pkg of packages" class="p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between">
-              <div>
-                <mat-card-title class="text-2xl font-bold text-blue-600 mb-2">{{ pkg.name }}</mat-card-title>
-                <mat-card-subtitle class="text-xl font-semibold text-green-600 mb-4">{{ pkg.price }}</mat-card-subtitle>
-                <ul class="text-left text-gray-700 mb-6 list-disc list-inside">
-                  <li *ngFor="let feature of pkg.features">{{ feature }}</li>
-                </ul>
-              </div>
-              <button mat-raised-button color="accent" (click)="selectPackage(pkg.id)" class="w-full mt-4">
-                Select {{ pkg.name }}
-              </button>
-            </mat-card>
+        <div class="mt-5">
+          <h2 class="fs-3 fw-semibold text-dark mb-4">Explore Our Compliance Packages</h2>
+          <div class="row row-cols-1 row-cols-md-3 g-4">
+            <div class="col" *ngFor="let pkg of packages">
+              <mat-card class="p-4 rounded-3 shadow h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <mat-card-title class="fs-4 fw-bold text-primary mb-2">{{ pkg.name }}</mat-card-title>
+                  <mat-card-subtitle class="fs-5 fw-semibold text-success mb-3">{{ pkg.price }}</mat-card-subtitle>
+                  <ul class="text-start text-secondary mb-4 ps-4"> <!-- Added ps-4 for default list padding -->
+                    <li *ngFor="let feature of pkg.features">{{ feature }}</li>
+                  </ul>
+                </div>
+                <button mat-raised-button color="accent" (click)="selectPackage(pkg.id)" class="w-100 mt-auto">
+                  Select {{ pkg.name }}
+                </button>
+              </mat-card>
+            </div>
           </div>
         </div>
       </mat-card-content>
     </mat-card>
 
     <!-- Compliance Dashboard (if business and compliance items exist) -->
-    <mat-card *ngIf="!isLoading && userBusiness && hasComplianceItems()" class="w-full max-w-6xl p-8 rounded-xl shadow-lg bg-white">
-      <mat-card-title class="text-3xl font-extrabold text-blue-700 mb-6">
+    <mat-card *ngIf="!isLoading && userBusiness && hasComplianceItems()" class="w-100 mw-100 p-4 rounded-4 shadow-lg bg-white">
+      <mat-card-title class="fs-2 fw-bold text-primary mb-4">
         Your Compliance Dashboard for {{ userBusiness.name }}
       </mat-card-title>
       <mat-card-content>
-        <p class="text-lg text-gray-700 mb-6">
+        <p class="fs-5 text-secondary mb-4">
           Here's a summary of your current compliance obligations. Stay on top of your requirements!
         </p>
 
-        <mat-tab-group animationDuration="500ms" class="mb-6">
+        <mat-tab-group animationDuration="500ms" class="mb-4">
           <mat-tab label="All Items ({{ complianceItems.length }})">
             <div class="p-4">
-              <h3 class="text-xl font-semibold text-gray-800 mb-4">All Compliance Items</h3>
+              <h3 class="fs-4 fw-semibold text-dark mb-3">All Compliance Items</h3>
               <mat-accordion multi>
-                <mat-expansion-panel *ngFor="let item of complianceItems" class="mb-2 rounded-lg shadow-sm">
+                <mat-expansion-panel *ngFor="let item of complianceItems" class="mb-2 rounded-3 shadow-sm">
                   <mat-expansion-panel-header>
-                    <mat-panel-title class="font-bold text-lg">
+                    <mat-panel-title class="fw-bold fs-5">
                       {{ item.title }}
                     </mat-panel-title>
-                    <mat-panel-description class="flex justify-end items-center">
+                    <mat-panel-description class="d-flex justify-content-end align-items-center">
                       <span [ngClass]="{
-                        'text-red-600': item.status === ComplianceStatus.TODO,
-                        'text-orange-600': item.status === ComplianceStatus.UPCOMING,
-                        'text-green-600': item.status === ComplianceStatus.COMPLETED
-                      }" class="font-semibold mr-4">
+                        'text-danger': item.status === ComplianceStatus.TODO,
+                        'text-warning': item.status === ComplianceStatus.UPCOMING,
+                        'text-success': item.status === ComplianceStatus.COMPLETED
+                      }" class="fw-semibold me-4">
                         Status: {{ item.status | titlecase }}
                       </span>
-                      <span *ngIf="item.dueDate" class="text-gray-600">
+                      <span *ngIf="item.dueDate" class="text-secondary">
                         Due: {{ item.dueDate | date:'shortDate' }}
                       </span>
                     </mat-panel-description>
                   </mat-expansion-panel-header>
-                  <div class="p-4 border-t border-gray-200">
-                    <p class="text-gray-700 mb-2"><strong>Description:</strong> {{ item.description }}</p>
-                    <p class="text-gray-700 mb-2"><strong>Category:</strong> {{ item.category }}</p>
-                    <p *ngIf="item.frequency" class="text-gray-700 mb-2"><strong>Frequency:</strong> {{ item.frequency }}</p>
-                    <p class="text-gray-700 mb-2"><strong>Issuing Authority:</strong> {{ item.issuingAuthority }}</p>
-                    <p *ngIf="item.relevantLaws && item.relevantLaws.length > 0" class="text-gray-700 mb-2"><strong>Relevant Laws:</strong> {{ item.relevantLaws.join(', ') }}</p>
-                    <p *ngIf="item.requiredDocuments && item.requiredDocuments.length > 0" class="text-gray-700 mb-2"><strong>Required Documents:</strong> {{ item.requiredDocuments.join(', ') }}</p>
-                    <p *ngIf="item.notes" class="text-gray-700 mb-2"><strong>Notes:</strong> {{ item.notes }}</p>
-                    <p *ngIf="item.attachments && item.attachments.length > 0" class="text-gray-700 mb-2"><strong>Attachments:</strong> {{ item.attachments.join(', ') }}</p>
-                    <p *ngIf="item.lastCompletedDate" class="text-gray-700 mb-2"><strong>Last Completed:</strong> {{ item.lastCompletedDate | date:'shortDate' }}</p>
+                  <div class="p-4 border-top border-light">
+                    <p class="text-secondary mb-2"><strong>Description:</strong> {{ item.description }}</p>
+                    <p class="text-secondary mb-2"><strong>Category:</strong> {{ item.category }}</p>
+                    <p *ngIf="item.frequency" class="text-secondary mb-2"><strong>Frequency:</strong> {{ item.frequency }}</p>
+                    <p class="text-secondary mb-2"><strong>Issuing Authority:</strong> {{ item.issuingAuthority }}</p>
+                    <p *ngIf="item.relevantLaws && item.relevantLaws.length > 0" class="text-secondary mb-2"><strong>Relevant Laws:</strong> {{ item.relevantLaws.join(', ') }}</p>
+                    <p *ngIf="item.requiredDocuments && item.requiredDocuments.length > 0" class="text-secondary mb-2"><strong>Required Documents:</strong> {{ item.requiredDocuments.join(', ') }}</p>
+                    <p *ngIf="item.notes" class="text-secondary mb-2"><strong>Notes:</strong> {{ item.notes }}</p>
+                    <p *ngIf="item.attachments && item.attachments.length > 0" class="text-secondary mb-2"><strong>Attachments:</strong> {{ item.attachments.join(', ') }}</p>
+                    <p *ngIf="item.lastCompletedDate" class="text-secondary mb-2"><strong>Last Completed:</strong> {{ item.lastCompletedDate | date:'shortDate' }}</p>
 
-                    <div class="flex justify-end mt-4 space-x-2">
+                    <div class="d-flex justify-content-end mt-4 space-x-2">
                       <button mat-raised-button color="primary" *ngIf="item.status !== ComplianceStatus.COMPLETED" (click)="markAsComplete(item)">
                         <mat-icon>check_circle</mat-icon> Mark as Complete
                       </button>
@@ -118,7 +119,7 @@
                     </div>
                   </div>
                 </mat-expansion-panel>
-                <p *ngIf="complianceItems.length === 0" class="text-gray-600 text-center py-4">No compliance items found.</p>
+                <p *ngIf="complianceItems.length === 0" class="text-secondary text-center py-4">No compliance items found.</p>
               </mat-accordion>
             </div>
           </mat-tab>
@@ -126,38 +127,38 @@
           <!-- Tabs for each category -->
           <mat-tab *ngFor="let category of complianceCategories" label="{{ category }} ({{ getCategoryItemCount(category) }})">
             <div class="p-4">
-              <h3 class="text-xl font-semibold text-gray-800 mb-4">{{ category }} Compliance Items</h3>
+              <h3 class="fs-4 fw-semibold text-dark mb-3">{{ category }} Compliance Items</h3>
               <mat-accordion multi>
-                <mat-expansion-panel *ngFor="let item of categorizedCompliance[category]" class="mb-2 rounded-lg shadow-sm">
+                <mat-expansion-panel *ngFor="let item of categorizedCompliance[category]" class="mb-2 rounded-3 shadow-sm">
                   <mat-expansion-panel-header>
-                    <mat-panel-title class="font-bold text-lg">
+                    <mat-panel-title class="fw-bold fs-5">
                       {{ item.title }}
                     </mat-panel-title>
-                    <mat-panel-description class="flex justify-end items-center">
+                    <mat-panel-description class="d-flex justify-content-end align-items-center">
                       <span [ngClass]="{
-                        'text-red-600': item.status === ComplianceStatus.TODO,
-                        'text-orange-600': item.status === ComplianceStatus.UPCOMING,
-                        'text-green-600': item.status === ComplianceStatus.COMPLETED
-                      }" class="font-semibold mr-4">
+                        'text-danger': item.status === ComplianceStatus.TODO,
+                        'text-warning': item.status === ComplianceStatus.UPCOMING,
+                        'text-success': item.status === ComplianceStatus.COMPLETED
+                      }" class="fw-semibold me-4">
                         Status: {{ item.status | titlecase }}
                       </span>
-                      <span *ngIf="item.dueDate" class="text-gray-600">
+                      <span *ngIf="item.dueDate" class="text-secondary">
                         Due: {{ item.dueDate | date:'shortDate' }}
                       </span>
                     </mat-panel-description>
                   </mat-expansion-panel-header>
-                  <div class="p-4 border-t border-gray-200">
-                    <p class="text-gray-700 mb-2"><strong>Description:</strong> {{ item.description }}</p>
-                    <p class="text-gray-700 mb-2"><strong>Category:</strong> {{ item.category }}</p>
-                    <p *ngIf="item.frequency" class="text-gray-700 mb-2"><strong>Frequency:</strong> {{ item.frequency }}</p>
-                    <p class="text-gray-700 mb-2"><strong>Issuing Authority:</strong> {{ item.issuingAuthority }}</p>
-                    <p *ngIf="item.relevantLaws && item.relevantLaws.length > 0" class="text-gray-700 mb-2"><strong>Relevant Laws:</strong> {{ item.relevantLaws.join(', ') }}</p>
-                    <p *ngIf="item.requiredDocuments && item.requiredDocuments.length > 0" class="text-gray-700 mb-2"><strong>Required Documents:</strong> {{ item.requiredDocuments.join(', ') }}</p>
-                    <p *ngIf="item.notes" class="text-gray-700 mb-2"><strong>Notes:</strong> {{ item.notes }}</p>
-                    <p *ngIf="item.attachments && item.attachments.length > 0" class="text-gray-700 mb-2"><strong>Attachments:</strong> {{ item.attachments.join(', ') }}</p>
-                    <p *ngIf="item.lastCompletedDate" class="text-gray-700 mb-2"><strong>Last Completed:</strong> {{ item.lastCompletedDate | date:'shortDate' }}</p>
+                  <div class="p-4 border-top border-light">
+                    <p class="text-secondary mb-2"><strong>Description:</strong> {{ item.description }}</p>
+                    <p class="text-secondary mb-2"><strong>Category:</strong> {{ item.category }}</p>
+                    <p *ngIf="item.frequency" class="text-secondary mb-2"><strong>Frequency:</strong> {{ item.frequency }}</p>
+                    <p class="text-secondary mb-2"><strong>Issuing Authority:</strong> {{ item.issuingAuthority }}</p>
+                    <p *ngIf="item.relevantLaws && item.relevantLaws.length > 0" class="text-secondary mb-2"><strong>Relevant Laws:</strong> {{ item.relevantLaws.join(', ') }}</p>
+                    <p *ngIf="item.requiredDocuments && item.requiredDocuments.length > 0" class="text-secondary mb-2"><strong>Required Documents:</strong> {{ item.requiredDocuments.join(', ') }}</p>
+                    <p *ngIf="item.notes" class="text-secondary mb-2"><strong>Notes:</strong> {{ item.notes }}</p>
+                    <p *ngIf="item.attachments && item.attachments.length > 0" class="text-secondary mb-2"><strong>Attachments:</strong> {{ item.attachments.join(', ') }}</p>
+                    <p *ngIf="item.lastCompletedDate" class="text-secondary mb-2"><strong>Last Completed:</strong> {{ item.lastCompletedDate | date:'shortDate' }}</p>
 
-                    <div class="flex justify-end mt-4 space-x-2">
+                    <div class="d-flex justify-content-end mt-4 space-x-2">
                       <button mat-raised-button color="primary" *ngIf="item.status !== ComplianceStatus.COMPLETED" (click)="markAsComplete(item)">
                         <mat-icon>check_circle</mat-icon> Mark as Complete
                       </button>
@@ -167,7 +168,7 @@
                     </div>
                   </div>
                 </mat-expansion-panel>
-                <p *ngIf="categorizedCompliance[category]?.length === 0" class="text-gray-600 text-center py-4">No {{ category }} compliance items found.</p>
+                <p *ngIf="categorizedCompliance[category]?.length === 0" class="text-secondary text-center py-4">No {{ category }} compliance items found.</p>
               </mat-accordion>
             </div>
           </mat-tab>

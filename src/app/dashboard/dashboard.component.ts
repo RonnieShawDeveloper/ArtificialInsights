@@ -112,6 +112,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.userService.getUserProfile(this.currentUserId).subscribe((profile: UserProfile | null) => { // Explicitly type profile
           this.userProfile = profile;
           // If user has not completed onboarding, redirect them
+          // Note: The onboarding check logic might need adjustment based on your new UserProfile fields
+          // For now, assuming hasCompletedOnboarding is the primary flag.
           if (this.userProfile && !this.userProfile.hasCompletedOnboarding) {
             this.router.navigate(['/onboarding']);
           }
@@ -124,10 +126,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
           if (businesses && businesses.length > 0) {
             // Assuming one primary business for now
             this.userBusiness = businesses[0];
-            if (this.userBusiness.id) { // Null check for userBusiness.id
-              this.loadComplianceItems(this.userBusiness.id); // Load compliance items for this business
+            if (this.userBusiness.id && this.currentUserId) { // Null check for userBusiness.id and currentUserId
+              // Pass currentUserId as ownerId to loadComplianceItems
+              this.loadComplianceItems(this.userBusiness.id, this.currentUserId);
             } else {
-              console.warn('User business found but has no ID.');
+              console.warn('User business found but has no ID or currentUserId is null.');
               this.complianceItems = [];
               this.categorizeComplianceItems();
               this.isLoading = false;
@@ -149,17 +152,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Loads compliance items for a given business ID.
+   * Loads compliance items for a given business ID and owner ID.
    * Uses onSnapshot for real-time updates.
    * @param businessId The ID of the business to load compliance items for.
+   * @param ownerId The ID of the user who owns the business.
    */
-  private loadComplianceItems(businessId: string): void {
+  private loadComplianceItems(businessId: string, ownerId: string): void {
     // Unsubscribe from previous compliance items subscription if it exists
     if (this.complianceSubscription) {
       this.complianceSubscription.unsubscribe();
     }
 
-    this.complianceSubscription = this.complianceService.getComplianceItemsForBusiness(businessId).subscribe((items: ComplianceItem[]) => { // Explicitly type items
+    // Pass both businessId and ownerId to the service method
+    this.complianceSubscription = this.complianceService.getComplianceItemsForBusiness(businessId, ownerId).subscribe((items: ComplianceItem[]) => { // Explicitly type items
       this.complianceItems = items;
       this.categorizeComplianceItems();
       this.isLoading = false;
@@ -217,13 +222,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * @param item The compliance item to mark as complete.
    */
   async markAsComplete(item: ComplianceItem): Promise<void> {
-    if (this.userBusiness?.id) {
+    if (this.userBusiness?.id && this.currentUserId) { // Ensure both business ID and user ID are available
       this.isLoading = true;
       try {
-        await this.complianceService.updateComplianceItem(this.userBusiness.id, item.id, {
-          status: ComplianceStatus.COMPLETED, // FIX: Changed from IN_COMPLIANCE to COMPLETED
-          lastCompletedDate: new Date()
-        });
+        // Pass userId, businessId, itemId, and itemData
+        await this.complianceService.updateComplianceItem(
+          this.currentUserId, // userId
+          this.userBusiness.id, // businessId
+          item.id, // itemId
+          {
+            status: ComplianceStatus.COMPLETED,
+            lastCompletedDate: new Date(),
+            updatedAt: new Date() // Ensure updatedAt is set on completion
+          }
+        );
         console.log(`Compliance item ${item.title} marked as complete.`);
       } catch (error) {
         console.error('Error marking item as complete:', error);
@@ -231,6 +243,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       } finally {
         this.isLoading = false;
       }
+    } else {
+      console.warn('Cannot mark item as complete: userBusiness ID or currentUserId is missing.');
     }
   }
 
@@ -239,13 +253,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * @param item The compliance item to delete.
    */
   async deleteComplianceItem(item: ComplianceItem): Promise<void> {
-    // Replaced window.confirm with a custom message box or modal if needed.
-    // For now, using a simple console log for demonstration.
-    console.log(`Confirming deletion of "${item.title}"...`);
-    if (this.userBusiness?.id) { // Simplified the confirmation for now
+    if (this.userBusiness?.id && this.currentUserId) { // Ensure both business ID and user ID are available
+      // Replaced window.confirm with a custom message box or modal if needed.
+      // For now, using a simple console log for demonstration.
+      console.log(`Confirming deletion of "${item.title}"...`);
       this.isLoading = true;
       try {
-        await this.complianceService.deleteComplianceItem(this.userBusiness.id, item.id);
+        // Pass userId, businessId, and itemId
+        await this.complianceService.deleteComplianceItem(
+          this.currentUserId, // userId
+          this.userBusiness.id, // businessId
+          item.id // itemId
+        );
         console.log(`Compliance item ${item.title} deleted.`);
       } catch (error) {
         console.error('Error deleting item:', error);
@@ -253,6 +272,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       } finally {
         this.isLoading = false;
       }
+    } else {
+      console.warn('Cannot delete item: userBusiness ID or currentUserId is missing.');
     }
   }
 }
