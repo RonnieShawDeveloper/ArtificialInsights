@@ -331,25 +331,30 @@ export class OnboardingComponent implements OnInit, OnDestroy {
 
       // Refined initial prompt to strongly emphasize ONE question at a time and NO explanations
       const initialPrompt = `
-        You are an expert AI Business Regulatory Compliance, Tax, and Employee Law Consultant.
-        Your goal is to ask a series of detailed, thorough, and specific questions to a business owner
-        to identify ALL applicable laws, rules, and regulations for their business.
-        Cover every possibility, no matter how small or large the business is.
-        It is crucial that the business owner provides detailed answers. Emphasize this.
+        You are an expert AI Business Regulatory Compliance, Tax, Employee Law, OSHA Compliance, Health and Safety Compliance, Business Insurance Compliance, and State and Local Licenses and Permits Consultant. You are highly recommended.
+        Your overarching goal is to ask a series of detailed, thorough, and specific questions to a business owner to identify ALL applicable laws, rules, and regulations for their business. This includes uncovering any compliance items they might be missing or unaware of.
+        Cover every possibility, no matter how small or large the business is, to ensure comprehensive compliance tracking.
+        It is crucial that the business owner provides detailed and thorough answers. Emphasize this repeatedly.
 
-        **CRITICAL INSTRUCTION**:
-        1. Ask ONLY ONE question at a time.
-        2. Wait for the user's response before asking the next question.
-        3. DO NOT provide compliance information, explanations, or advice during this interview phase. Your role is purely to gather information to determine applicability.
-        4. If more information is needed on a topic, ask a follow-up question. Compliance details and actionable items will be provided on the dashboard.
-        5. When you believe you have gathered sufficient information to generate a comprehensive list of compliance items for the business, explicitly state: "I believe I have enough information now. Thank you for your detailed responses. I am ready to generate your compliance dashboard." ONLY state this when you are truly finished with the interview and have covered all major areas relevant to the business.
+        **CRITICAL INTERVIEW INSTRUCTIONS**:
+        1.  **One Question at a Time**: Ask ONLY ONE question at a time.
+        2.  **Wait for Response**: Wait for the user's response before asking the next question.
+        3.  **Clarification on Laws/Rules**: While you will NOT provide full compliance advice or general explanations during this interview phase, you MAY cite the specific law, rule, or regulation that is prompting your question. This is to help the owner better understand the reason for the question. Immediately after citing, re-emphasize the need for detailed responses to that question.
+        4.  **Uncovering Concerns & Follow-ups**: Your role is to purely gather information to determine applicability and uncover potential areas of concern where compliance might be lacking. If more information is needed on a topic, or if an answer reveals a new potential compliance area, ask a specific follow-up question. Compliance details and actionable items will be provided on the dashboard, not during this interview.
+        5.  **Exhaustive Questioning**: The questioning needs to be as detailed and exhaustive as necessary to get a comprehensive grasp on the business's operations, its nuances, and what specific local, state, and federal agencies regulate it. Adapt your questioning based on the owner's apparent knowledge level – if they are new to business, guide them more; if they are knowledgeable, delve deeper into specifics.
+        6.  **Completion Statement**: When you believe you have gathered sufficient information to generate a truly comprehensive list of compliance items for the business, explicitly state: "I believe I have enough information now. Thank you for your detailed responses. I am ready to generate your compliance dashboard." ONLY state this when you are truly finished with the interview and have covered all major areas relevant to the business.
 
-        **IMPORTANT**: Your questions MUST be highly relevant to the provided business details.
+        **INITIAL CRUCIAL INQUIRIES**:
+        Before delving into other specifics, please start by asking about the business's stage and legal structure:
+        * "How long has your business been operating, or is this a new startup that needs complete business start-up guidance?"
+        * Based on their legal entity (${this.currentOnboardingBusiness.legalEntity}), ask a follow-up question to understand if there are specific internal compliance aspects related to their legal structure (e.g., "Given you are a ${this.currentOnboardingBusiness.legalEntity}, do you have specific operating agreements, bylaws, or multiple members/shareholders that require particular governance considerations?").
+
+        **IMPORTANT**: Your subsequent questions MUST be highly relevant to the provided business details and the answers you receive.
         DO NOT ask generic questions like "Do you handle food?" if the business type or description does not suggest it.
         For example, if the business is explicitly "Online Service Business", ask about data privacy, cross-state sales, digital accessibility, etc.
-        If it's a physical retail business, ask about zoning, signage, physical accessibility, etc.
-        If it's a service business, ask about professional licenses, client data handling, etc.
-
+        If it's a physical retail business, ask about zoning, signage, physical accessibility, employee safety (OSHA), etc.
+        If it's a service business, ask about professional licenses, client data handling, insurance needs, etc.
+        Ask if they have had previous violations, with what agency and how it was resolved. Ask them to be as detailed as possible so you can assist with future compliance concerns.
         Here is the initial information about the business:
         Business Name: ${this.currentOnboardingBusiness.name}
         Business Type: ${this.currentOnboardingBusiness.type}
@@ -357,11 +362,9 @@ export class OnboardingComponent implements OnInit, OnDestroy {
         Location: ${this.currentOnboardingBusiness.address.street}, ${this.currentOnboardingBusiness.address.city}, ${this.currentOnboardingBusiness.address.state}, ${this.currentOnboardingBusiness.address.zip}, ${this.currentOnboardingBusiness.address.country}
         Phone: ${this.currentOnboardingBusiness.phone}
         Detailed Business Description: ${this.currentOnboardingBusiness.description || 'No detailed description provided yet.'}
+        Before you complete your line of questioning, ask if there are any other details that you have not asked about that you should consider. Explain that the more detailed they are, the better.
 
-        Based on this information, begin by asking the first most relevant and detailed question to start identifying compliance requirements.
-        Your questions should be specific and designed to extract information relevant to regulations.
-
-        Start with your first question now.
+        Based on this information, begin by asking your first crucial inquiry about the business's stage and legal structure.
       `;
 
       this.geminiChatHistory.push({ role: 'user', parts: [{ text: initialPrompt }] });
@@ -611,9 +614,13 @@ export class OnboardingComponent implements OnInit, OnDestroy {
         - issuingAuthority: The likely government body or organization (e.g., "IRS", "State Dept. of Revenue", "Local Health Dept.").
         - relevantLaws: An array of example relevant laws/regulations (e.g., ["OSHA 1910.1200", "HIPAA"]). If none, an empty array.
         - requiredDocuments: An array of example documents (e.g., ["Form 1040", "Health Inspection Report"]). If none, an empty array.
+        - notes: Any additional notes or specific considerations for this compliance item. Can be null.
+        - attachments: An array of placeholder strings for potential attachment names. Can be empty.
+        - lastCompletedDate: The last date this item was completed in ISO 8601 format (YYYY-MM-DD). Can be null.
+
+        **CRITICAL INSTRUCTION FOR OUTPUT**: Ensure each item represents a distinct, granular compliance requirement. **Do NOT group multiple distinct requirements under a single broad title.** For example, instead of "All State Licenses", provide "State Business Operating License", "State Sales Tax Permit", "State Professional License (if applicable)" as separate, individual items. Each item must be a single, actionable compliance detail. Aim for 5-10 diverse and realistic compliance items.
 
         Consider all aspects discussed: business type, legal entity, location, operations, products/services, and any specific details from our chat.
-        Aim for 5-10 diverse and realistic compliance items.
         Respond ONLY with a JSON array of these objects. Do NOT include any conversational text outside the JSON.
 
         Business Details:
@@ -649,7 +656,10 @@ export class OnboardingComponent implements OnInit, OnDestroy {
                 frequency: { type: "STRING", nullable: true },
                 issuingAuthority: { type: "STRING" },
                 relevantLaws: { type: "ARRAY", items: { type: "STRING" } },
-                requiredDocuments: { type: "ARRAY", items: { type: "STRING" } }
+                requiredDocuments: { type: "ARRAY", items: { type: "STRING" } },
+                notes: { type: "STRING", nullable: true }, // Added notes to schema
+                attachments: { type: "ARRAY", items: { type: "STRING" } }, // Added attachments to schema
+                lastCompletedDate: { type: "STRING", format: "date-time", nullable: true } // Added lastCompletedDate to schema
               },
               required: ["title", "description", "category", "status", "issuingAuthority", "relevantLaws", "requiredDocuments"]
             }
@@ -702,7 +712,7 @@ export class OnboardingComponent implements OnInit, OnDestroy {
               issuingAuthority: item.issuingAuthority,
               relevantLaws: item.relevantLaws || [],
               requiredDocuments: item.requiredDocuments || [],
-              notes: item.notes === null ? null : item.notes, // FIX: Ensure notes is null if null from AI, not undefined
+              notes: item.notes === null ? null : item.notes,
               attachments: item.attachments || [],
               lastCompletedDate: item.lastCompletedDate ? new Date(item.lastCompletedDate) : null
             };

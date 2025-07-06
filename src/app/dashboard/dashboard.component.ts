@@ -1,271 +1,258 @@
 // src/app/dashboard/dashboard.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatListModule } from '@angular/material/list';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatListModule } from '@angular/material/list';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
-import { AuthService } from '../services/auth.service';
-import { UserService } from '../services/user.service'; // Import UserService
-import { UserProfile } from '../models/user.model'; // Import UserProfile model
-import { User } from 'firebase/auth';
 import { Subscription, combineLatest } from 'rxjs';
-import { filter } from 'rxjs/operators';
-
-// Interface for subscription packages (retained from previous step)
-interface SubscriptionPackage {
-  id: string;
-  name: string;
-  description: string;
-  priceAnnual: number;
-  priceMonthly: number;
-  features: string[];
-  isMain?: boolean;
-}
+import { AuthService } from '../services/auth.service';
+import { UserService } from '../services/user.service';
+import { BusinessService } from '../services/business.service';
+import { ComplianceService } from '../services/compliance.service';
+import { UserProfile } from '../models/user.model';
+import { Business } from '../models/business.model';
+import { ComplianceItem, ComplianceCategory, ComplianceStatus } from '../models/compliance-item.model';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
     CommonModule,
-    RouterModule,
+    RouterLink,
     MatButtonModule,
     MatIconModule,
-    MatToolbarModule,
-    MatSidenavModule,
-    MatListModule,
     MatCardModule,
     MatProgressBarModule,
     MatTabsModule,
-    MatMenuModule
+    MatExpansionModule,
+    MatListModule,
+    MatToolbarModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  currentUser: User | null = null;
-  userProfile: UserProfile | null = null; // New property for user profile
-  private subscriptions = new Subscription(); // Use a single subscription for cleanup
-  isLoading = false;
+  private subscriptions = new Subscription();
+  private complianceSubscription: Subscription | null = null; // Dedicated subscription for compliance items
+  currentUserId: string | null = null;
+  userProfile: UserProfile | null = null;
+  userBusiness: Business | null = null;
+  complianceItems: ComplianceItem[] = [];
+  isLoading = true;
   errorMessage: string | null = null;
 
-  // Subscription status will now be derived from userProfile.isSubscribed
-  isSubscribed = false;
+  // Categorized compliance items for display
+  complianceCategories = Object.values(ComplianceCategory);
+  categorizedCompliance: { [key: string]: ComplianceItem[] } = {};
 
-  // Placeholder for business/location selection
-  selectedBusiness: any = null;
-  businesses: any[] = [
-    { id: 'biz1', name: 'Artificial Insights HQ', type: 'Consulting' },
-    { id: 'biz2', name: 'AI Restaurant - Downtown', type: 'Restaurant' },
-    { id: 'biz3', name: 'AI Clinic - North', type: 'Health Clinic' }
+  // For displaying package options if onboarding is not complete - MADE PUBLIC
+  public packages = [ // FIX: Made 'packages' property public
+    { id: 'basic', name: 'Basic Compliance', price: '$9.99/month', features: ['Essential Licenses', 'Basic Tax Reminders'] },
+    { id: 'pro', name: 'Pro Compliance', price: '$29.99/month', features: ['All Basic Features', 'OSHA & Safety', 'HR & Employee Law', 'Business Insurance'] },
+    { id: 'premium', name: 'Premium Compliance', price: '$49.99/month', features: ['All Pro Features', 'Advanced Regulatory Guidance', 'Dedicated Support'] }
   ];
 
-  // Define subscription packages (retained from previous step)
-  packages: SubscriptionPackage[] = [
-    {
-      id: 'package-main',
-      name: 'Standard Business Compliance',
-      description: 'Covers 1 business location with essential compliance tracking.',
-      priceAnnual: 129.95,
-      priceMonthly: 14.95,
-      features: [
-        '1 Business Location',
-        'Annual & Monthly Compliance Tracking',
-        'AI Regulatory Guidance',
-        '5-Day Free Trial'
-      ],
-      isMain: true
-    },
-    {
-      id: 'package-pro',
-      name: 'Pro Compliance Suite',
-      description: 'Advanced features for growing businesses.',
-      priceAnnual: 299.95,
-      priceMonthly: 29.95,
-      features: [
-        'All Standard Features',
-        'Priority AI Support',
-        'Customizable Alerts',
-        'Advanced Reporting'
-      ]
-    },
-    {
-      id: 'package-enterprise',
-      name: 'Enterprise Solution',
-      description: 'Tailored for large organizations with complex needs.',
-      priceAnnual: 999.95,
-      priceMonthly: 99.95,
-      features: [
-        'All Pro Features',
-        'Multi-User Access',
-        'Dedicated Compliance Manager',
-        'API Integrations'
-      ]
-    }
-  ];
-
-  // Price for additional locations (retained from previous step)
-  additionalLocationPriceAnnual = 79.95;
-  additionalLocationPriceMonthly = 8.95;
-
+  // Make AuthService and ComplianceStatus public for template access
   constructor(
-    private authService: AuthService,
-    private userService: UserService, // Inject UserService
+    public authService: AuthService, // Made public for template access
+    private userService: UserService,
+    private businessService: BusinessService,
+    private complianceService: ComplianceService,
     private router: Router
   ) {}
 
-  ngOnInit(): void {
-    // Combine observables to react to both auth state and user profile changes
-    this.subscriptions.add(
-      combineLatest([
-        this.authService.currentUser$,
-        this.authService.isAuthReady$.pipe(filter(isReady => isReady)) // Ensure auth is ready
-      ]).subscribe(([user, isAuthReady]) => {
-        this.currentUser = user;
-        if (!user) {
-          // If user logs out or session expires, redirect to login
-          this.router.navigate(['/login']);
-        } else {
-          // Fetch user profile after authentication is ready and user is logged in
-          this.subscriptions.add(
-            this.userService.getUserProfile().subscribe(profile => {
-              this.userProfile = profile;
-              // Update isSubscribed based on user profile
-              this.isSubscribed = !!profile?.isSubscribed;
+  // Expose ComplianceStatus enum to the template
+  public ComplianceStatus = ComplianceStatus;
 
-              if (this.isSubscribed) {
-                // If subscribed, then try to select a business
-                if (!this.selectedBusiness && this.businesses.length > 0) {
-                  this.selectedBusiness = this.businesses[0]; // Auto-select first mock business
-                }
-                this.loadDashboardData();
-              } else {
-                // If not subscribed, no dashboard data to load yet.
-                // The HTML will show the welcome and packages.
-                this.isLoading = false; // Ensure loading is off if not subscribed
-              }
-            })
-          );
+
+  async ngOnInit(): Promise<void> {
+    this.subscriptions.add(
+      this.authService.currentUser$.subscribe(async user => {
+        if (user) {
+          this.currentUserId = user.uid;
+          await this.loadDashboardData();
+        } else {
+          // If no user, redirect to login or show a public landing
+          this.router.navigate(['/login']);
         }
       })
     );
   }
 
   ngOnDestroy(): void {
-    // Unsubscribe from all subscriptions to prevent memory leaks
     this.subscriptions.unsubscribe();
+    if (this.complianceSubscription) {
+      this.complianceSubscription.unsubscribe();
+    }
   }
 
   /**
-   * Placeholder for loading dashboard data.
-   * This will eventually fetch compliance items from Firestore.
+   * Loads all necessary dashboard data: user profile, business, and compliance items.
    */
-  loadDashboardData(): void {
-    if (!this.isSubscribed) {
+  private async loadDashboardData(): Promise<void> {
+    if (!this.currentUserId) {
+      this.errorMessage = 'User not authenticated.';
       this.isLoading = false;
       return;
     }
-    this.isLoading = true;
-    this.errorMessage = null;
-    // Simulate data loading
-    setTimeout(() => {
-      console.log('Loading dashboard data for:', this.selectedBusiness?.name);
-      // Here, you would fetch data from Firestore based on selectedBusiness
-      this.isLoading = false;
-    }, 1000);
-  }
 
-  /**
-   * Handles the sign-out process.
-   */
-  async onSignOut(): Promise<void> {
+    this.isLoading = true;
     try {
-      await this.authService.signOut();
+      // Use onSnapshot for real-time updates for user profile
+      this.subscriptions.add(
+        this.userService.getUserProfile(this.currentUserId).subscribe((profile: UserProfile | null) => { // Explicitly type profile
+          this.userProfile = profile;
+          // If user has not completed onboarding, redirect them
+          if (this.userProfile && !this.userProfile.hasCompletedOnboarding) {
+            this.router.navigate(['/onboarding']);
+          }
+        })
+      );
+
+      // Use onSnapshot for real-time updates for user's businesses
+      this.subscriptions.add(
+        this.businessService.getBusinessesForUser(this.currentUserId).subscribe((businesses: Business[]) => { // Explicitly type businesses
+          if (businesses && businesses.length > 0) {
+            // Assuming one primary business for now
+            this.userBusiness = businesses[0];
+            if (this.userBusiness.id) { // Null check for userBusiness.id
+              this.loadComplianceItems(this.userBusiness.id); // Load compliance items for this business
+            } else {
+              console.warn('User business found but has no ID.');
+              this.complianceItems = [];
+              this.categorizeComplianceItems();
+              this.isLoading = false;
+            }
+          } else {
+            this.userBusiness = null;
+            this.complianceItems = [];
+            this.categorizeComplianceItems(); // Clear categorized items
+            this.isLoading = false; // No business, so no compliance items to load
+          }
+        })
+      );
+
     } catch (error) {
-      console.error('Error signing out:', error);
-      this.errorMessage = 'Failed to sign out. Please try again.';
-    }
-  }
-
-  /**
-   * Allows the owner to select a different business or location.
-   * Only applicable if subscribed.
-   * @param business The business object to select.
-   */
-  onBusinessSelect(business: any): void {
-    if (this.isSubscribed) {
-      this.selectedBusiness = business;
-      this.loadDashboardData();
-    }
-  }
-
-  /**
-   * Placeholder for adding a new business/location.
-   * This will be part of the subscription flow or an add-on.
-   */
-  onAddNewBusiness(): void {
-    console.log('Navigating to new business creation flow or prompting for add-on...');
-    // TODO: Implement navigation to a dedicated component for adding new businesses
-  }
-
-  /**
-   * Placeholder for interacting with the AI Assistant.
-   */
-  onAskAIAssistant(): void {
-    console.log('Opening AI Assistant chat...');
-    // TODO: Implement AI Assistant chat interface
-  }
-
-  /**
-   * Handles the "Choose Plan" action for a subscription package.
-   * This is where the user's profile will be created/updated in Firestore
-   * and they will be redirected to the AI onboarding.
-   * @param pkg The selected SubscriptionPackage.
-   */
-  async onChoosePlan(pkg: SubscriptionPackage): Promise<void> {
-    if (!this.currentUser?.uid) {
-      this.errorMessage = 'Authentication error: User not logged in.';
-      return;
-    }
-
-    this.isLoading = true;
-    this.errorMessage = null;
-
-    try {
-      // Calculate trial end date (5 days from now)
-      const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 5);
-
-      // Prepare user profile data
-      const userProfileData: Partial<UserProfile> = {
-        uid: this.currentUser.uid,
-        email: this.currentUser.email || 'N/A', // Use current user's email
-        isSubscribed: true, // Mark as subscribed
-        subscriptionPackageId: pkg.id,
-        subscriptionStartDate: new Date(), // Current date
-        trialEndDate: trialEndDate,
-        hasTrialUsed: false // Assume first trial for now
-      };
-
-      // Set/update the user's profile in Firestore
-      await this.userService.setUserProfile(this.currentUser.uid, userProfileData);
-
-      console.log('User chose plan:', pkg.name, 'and profile updated. Redirecting to onboarding.');
-      // Redirect to the onboarding page, potentially passing package ID as query param
-      this.router.navigate(['/onboarding'], { queryParams: { packageId: pkg.id } });
-
-    } catch (error: any) {
-      console.error('Error choosing plan and updating profile:', error);
-      this.errorMessage = error.message || 'Failed to choose plan. Please try again.';
-    } finally {
+      console.error('Error loading dashboard data:', error);
+      this.errorMessage = 'Failed to load dashboard data. Please try again.';
       this.isLoading = false;
+    }
+  }
+
+  /**
+   * Loads compliance items for a given business ID.
+   * Uses onSnapshot for real-time updates.
+   * @param businessId The ID of the business to load compliance items for.
+   */
+  private loadComplianceItems(businessId: string): void {
+    // Unsubscribe from previous compliance items subscription if it exists
+    if (this.complianceSubscription) {
+      this.complianceSubscription.unsubscribe();
+    }
+
+    this.complianceSubscription = this.complianceService.getComplianceItemsForBusiness(businessId).subscribe((items: ComplianceItem[]) => { // Explicitly type items
+      this.complianceItems = items;
+      this.categorizeComplianceItems();
+      this.isLoading = false;
+    });
+    this.subscriptions.add(this.complianceSubscription); // Add to main subscription for overall cleanup
+  }
+
+  /**
+   * Categorizes compliance items for display in tabs/expansion panels.
+   */
+  private categorizeComplianceItems(): void {
+    this.categorizedCompliance = {};
+    this.complianceCategories.forEach(category => {
+      this.categorizedCompliance[category] = this.complianceItems.filter(item => item.category === category);
+    });
+    console.log('Categorized Compliance Items:', this.categorizedCompliance);
+  }
+
+  /**
+   * Navigates to the onboarding page with the selected package.
+   * @param packageId The ID of the selected package.
+   */
+  selectPackage(packageId: string): void {
+    this.router.navigate(['/onboarding'], { queryParams: { packageId: packageId } });
+  }
+
+  /**
+   * Checks if there are any compliance items to display.
+   * @returns True if there are compliance items, false otherwise.
+   */
+  hasComplianceItems(): boolean {
+    return this.complianceItems && this.complianceItems.length > 0;
+  }
+
+  /**
+   * Filters compliance items by status.
+   * @param status The status to filter by (e.g., 'TODO', 'UPCOMING', 'COMPLETED').
+   * @returns An array of compliance items matching the given status.
+   */
+  getComplianceItemsByStatus(status: ComplianceStatus): ComplianceItem[] {
+    return this.complianceItems.filter(item => item.status === status);
+  }
+
+  /**
+   * Gets the count of compliance items for a specific category.
+   * @param category The compliance category.
+   * @returns The number of items in that category.
+   */
+  getCategoryItemCount(category: ComplianceCategory): number {
+    return this.categorizedCompliance[category]?.length || 0;
+  }
+
+  /**
+   * Marks a compliance item as complete.
+   * @param item The compliance item to mark as complete.
+   */
+  async markAsComplete(item: ComplianceItem): Promise<void> {
+    if (this.userBusiness?.id) {
+      this.isLoading = true;
+      try {
+        await this.complianceService.updateComplianceItem(this.userBusiness.id, item.id, {
+          status: ComplianceStatus.COMPLETED, // FIX: Changed from IN_COMPLIANCE to COMPLETED
+          lastCompletedDate: new Date()
+        });
+        console.log(`Compliance item ${item.title} marked as complete.`);
+      } catch (error) {
+        console.error('Error marking item as complete:', error);
+        this.errorMessage = 'Failed to update compliance item status.';
+      } finally {
+        this.isLoading = false;
+      }
+    }
+  }
+
+  /**
+   * Deletes a compliance item.
+   * @param item The compliance item to delete.
+   */
+  async deleteComplianceItem(item: ComplianceItem): Promise<void> {
+    // Replaced window.confirm with a custom message box or modal if needed.
+    // For now, using a simple console log for demonstration.
+    console.log(`Confirming deletion of "${item.title}"...`);
+    if (this.userBusiness?.id) { // Simplified the confirmation for now
+      this.isLoading = true;
+      try {
+        await this.complianceService.deleteComplianceItem(this.userBusiness.id, item.id);
+        console.log(`Compliance item ${item.title} deleted.`);
+      } catch (error) {
+        console.error('Error deleting item:', error);
+        this.errorMessage = 'Failed to delete compliance item.';
+      } finally {
+        this.isLoading = false;
+      }
     }
   }
 }
